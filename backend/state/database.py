@@ -208,6 +208,8 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )""")
     _add_column_if_missing(conn, "users", "together_since", "DATE DEFAULT NULL")
+    _add_column_if_missing(conn, "users", "google_id", "TEXT DEFAULT NULL")
+    _add_column_if_missing(conn, "users", "auth_provider", "TEXT DEFAULT 'email'")
 
     conn.execute("""CREATE TABLE IF NOT EXISTS site_books (
         site_id TEXT NOT NULL,
@@ -253,6 +255,35 @@ def create_user(id: str, email: str, name: str, password_hash: str) -> bool:
         return False
     finally:
         conn.close()
+
+
+def get_user_by_google_id(google_id: str) -> Optional[dict]:
+    conn = _get_conn()
+    row = conn.execute("SELECT * FROM users WHERE google_id = ?", (google_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def create_google_user(id: str, email: str, name: str, google_id: str) -> bool:
+    conn = _get_conn()
+    try:
+        conn.execute(
+            "INSERT INTO users (id, email, name, password_hash, google_id, auth_provider) VALUES (?, ?, ?, ?, ?, ?)",
+            (id, email, name, "GOOGLE_AUTH_NO_PASSWORD", google_id, "google"),
+        )
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+
+def link_google_to_user(user_id: str, google_id: str):
+    conn = _get_conn()
+    conn.execute("UPDATE users SET google_id = ?, auth_provider = 'google' WHERE id = ?", (google_id, user_id))
+    conn.commit()
+    conn.close()
 
 
 def get_user_by_email(email: str) -> Optional[dict]:

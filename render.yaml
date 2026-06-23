@@ -15,6 +15,8 @@ services:
         sync: false
       - key: GMAIL_APP_PASSWORD
         sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
     disk:
       name: eternova-data
       mountPath: /app

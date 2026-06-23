@@ -1,12 +1,13 @@
 "use client";
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { apiLogin, apiRegister, apiMe } from "@/lib/api";
+import { apiLogin, apiRegister, apiMe, apiGoogleAuth } from "@/lib/api";
 
 interface AuthState {
   user: { id: string; email: string; name: string } | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, name: string, password: string) => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -40,13 +41,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser({ id: res.user_id, email: res.email, name: res.name });
   }, []);
 
+  const googleLogin = useCallback(async (credential: string) => {
+    const res = await apiGoogleAuth(credential);
+    localStorage.setItem("eternova_token", res.token);
+    setUser({ id: res.user_id, email: res.email, name: res.name });
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem("eternova_token");
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, googleLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );

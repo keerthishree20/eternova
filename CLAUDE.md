@@ -6,7 +6,7 @@ Eternova is a Secret Love & Relationship Memory Platform. Users preserve love st
 ## Tech Stack
 - **Backend**: FastAPI + SQLite (raw sqlite3, WAL mode, no ORM)
 - **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind CSS + Framer Motion
-- **Auth**: Custom JWT (PBKDF2 password hashing, HS256, 24hr expiry)
+- **Auth**: Custom JWT (PBKDF2 password hashing, HS256, 24hr expiry) + Google OAuth
 - **Deployment**: Render (backend) + Vercel (frontend)
 
 ## Live URLs
@@ -21,7 +21,7 @@ eternova/
 │   ├── api/
 │   │   ├── models.py         # All Pydantic request/response models
 │   │   └── routes/
-│   │       ├── auth.py        # Register, login, /me, forgot/reset password
+│   │       ├── auth.py        # Register, login, Google OAuth, /me, forgot/reset password
 │   │       ├── books.py       # Books + entries + photos CRUD
 │   │       ├── capsules.py    # Time capsules with lock enforcement
 │   │       ├── milestones.py  # Milestone CRUD + upcoming
@@ -32,7 +32,7 @@ eternova/
 │   │       ├── scheduled_letters.py  # Surprise letter scheduling
 │   │       └── couple.py      # Partner linking via invite codes
 │   ├── core/
-│   │   ├── auth.py            # JWT + password hashing + get_current_user
+│   │   ├── auth.py            # JWT + password hashing + Google OAuth + get_current_user
 │   │   ├── email.py           # Gmail SMTP (password reset + surprise letters)
 │   │   ├── photos.py          # Photo save/delete with UUID filenames
 │   │   ├── sharing.py         # Share token generation
@@ -73,6 +73,8 @@ npm run dev
 ### Authentication
 Every authenticated route uses `Depends(get_current_user)`. The frontend stores JWT in `localStorage('eternova_token')` and sends it as `Authorization: Bearer <token>`.
 
+**Google OAuth**: Users can sign in via Google Identity Services. The frontend sends the Google ID token to `POST /api/auth/google`, the backend verifies it with Google's tokeninfo endpoint, and returns a JWT. Google users who share an email with an existing account are auto-linked. Google-only users have no password (password login returns "Invalid email or password").
+
 ### Couple Mode (Shared Ownership)
 `get_accessible_user_ids(user_id)` returns `[user_id]` or `[user_id, partner_id]` if linked. All list queries use `WHERE user_id IN (...)` for shared access.
 
@@ -94,6 +96,7 @@ All routes prefixed with `/api`.
 
 ### Public (no auth)
 - `GET /health`
+- `POST /api/auth/google`
 - `POST /api/auth/forgot-password`
 - `POST /api/auth/reset-password`
 - `GET /api/public/books/{share_token}`
@@ -109,9 +112,11 @@ All routes prefixed with `/api`.
 - `CORS_ORIGINS` — Comma-separated allowed origins
 - `GMAIL_USER` — Gmail address for password reset & surprise letters
 - `GMAIL_APP_PASSWORD` — Gmail app password
+- `GOOGLE_CLIENT_ID` — Google OAuth Client ID
 
 ### Frontend (.env.local)
 - `NEXT_PUBLIC_API_URL` — Backend API URL
+- `NEXT_PUBLIC_GOOGLE_CLIENT_ID` — Google OAuth Client ID
 
 ## Testing
 ```bash

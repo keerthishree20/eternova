@@ -22,6 +22,9 @@ class ResetPasswordRequest(BaseModel):
     code: str
     new_password: str
 
+class GoogleAuthRequest(BaseModel):
+    credential: str
+
 class AuthResponse(BaseModel):
     user_id: str
     email: str

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 
 export default function LoginPage() {
   const { login, user } = useAuth();
@@ -57,6 +58,11 @@ export default function LoginPage() {
             className="w-full py-2.5 rounded-xl gradient-brand text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
             {loading ? "Signing in..." : "Sign In"}
           </button>
+          <div className="relative my-2">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-card-border" /></div>
+            <div className="relative flex justify-center text-sm"><span className="bg-card px-3 text-muted">or</span></div>
+          </div>
+          <GoogleSignInButton onError={(msg) => setError(msg)} />
           <div className="flex items-center justify-between text-sm">
             <Link href="/forgot-password" className="text-primary hover:underline">Forgot password?</Link>
             <p className="text-muted">

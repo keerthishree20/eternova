@@ -16,7 +16,7 @@
 
 Eternova is a full-stack web application for preserving love stories and relationship memories. Unlike social media or dating apps, it focuses on the deeply personal act of recording, protecting, and sharing memories with one special person.
 
-**23 features** across **70 source files** (23 backend, 32 frontend), **16 database tables**, and **40+ API endpoints**.
+**24 features** across **71 source files** (23 backend, 33 frontend), **16 database tables**, and **40+ API endpoints**.
 
 ---
 
@@ -60,7 +60,7 @@ Eternova is a full-stack web application for preserving love stories and relatio
 ### 16 Tables
 
 **Core User Data:**
-- `users` — id, email, name, password_hash, partner_id, together_since
+- `users` — id, email, name, password_hash, partner_id, together_since, google_id, auth_provider
 - `couple_invites` — id, from_user_id, invite_code, invite_email, status
 - `password_resets` — id, email, code, expires_at, used, created_at
 
@@ -108,10 +108,12 @@ New columns added via `_add_column_if_missing()` so `init_db()` is safe to run m
 #### `core/auth.py`
 - `_hash_password()` — PBKDF2-HMAC-SHA256, 100k iterations, 32-byte salt
 - `create_token()` — Custom JWT with HS256, base64url encoding, 24hr expiry
+- `google_authenticate()` — Verifies Google ID token via Google's tokeninfo endpoint, creates or links accounts
 - `get_current_user()` — FastAPI `Depends()` that reads Bearer token, returns user dict or 401
 
 #### `api/routes/auth.py`
 - Register, login, `/me` endpoints
+- `google` — receives Google ID token, verifies with Google, returns JWT (creates account or links existing)
 - `forgot-password` — generates 6-digit code, stores in `password_resets`, emails via Gmail SMTP
 - `reset-password` — validates code + expiry, updates password hash
 - Always returns same message regardless of email existence (security)
@@ -132,6 +134,7 @@ New columns added via `_add_column_if_missing()` so `init_db()` is safe to run m
 - `init_db()` creates all 15 tables + indexes
 - `_add_column_if_missing()` for safe schema evolution
 - `get_accessible_user_ids()` returns [user_id] or [user_id, partner_id] for couple mode
+- `get_user_by_google_id()`, `create_google_user()`, `link_google_to_user()` for Google OAuth
 
 #### `api/routes/books.py`
 - CRUD for books + entries + photos
@@ -177,12 +180,15 @@ New columns added via `_add_column_if_missing()` so `init_db()` is safe to run m
 
 ### Architecture
 - All pages use `"use client"` (client-side rendering)
-- `AuthContext` — stores user + token in localStorage, auto-validates on mount
+- `AuthContext` — stores user + token in localStorage, auto-validates on mount, supports Google login
 - `ThemeContext` — dark/light toggle, persists in localStorage
 - `lib/api.ts` — typed fetch wrapper with automatic Bearer token injection
 - No external state management (useState + useEffect pattern)
 
 ### Key Components
+
+#### `components/auth/GoogleSignInButton.tsx`
+Google Identity Services integration. Loads the GIS script, renders Google's "Continue with Google" button, sends credential to backend via `apiGoogleAuth`.
 
 #### `components/DetailsMenu.tsx`
 Reusable 3-dot menu with details display + edit/delete actions. Used on books, capsules, milestones, sites, entries, and surprise letters.
@@ -201,8 +207,8 @@ Conditionally wraps pages in `max-w-7xl` container. Public pages (`/site/*`, `/s
 | Route | Purpose |
 |-------|---------|
 | `/` | Dashboard — stats, together-since, on-this-day, surprise-me |
-| `/login` | Login form |
-| `/register` | Registration form |
+| `/login` | Login form + Google Sign-In |
+| `/register` | Registration form + Google Sign-In |
 | `/forgot-password` | Email-based password reset (code entry + new password) |
 | `/books` | Book list with 3-dot menu |
 | `/books/new` | Create book with Spotify + color picker |
@@ -235,6 +241,7 @@ CSS variables in `globals.css` with `.dark` class toggle. Tailwind `darkMode: "c
 
 ### 1. Register & Login
 - Register with email, name, password (min 6 chars)
+- **Google Sign-In**: One-click login/register via Google account (auto-links if email matches existing account)
 - JWT token stored in localStorage
 - Auto-redirects to dashboard
 - Forgot password: enter email → receive 6-digit code → enter code + new password → reset complete
@@ -349,6 +356,7 @@ CSS variables in `globals.css` with `.dark` class toggle. Tailwind `darkMode: "c
    - `CORS_ORIGINS` → Your Vercel URL (e.g., `https://eternova-abc.vercel.app`)
    - `GMAIL_USER` → Your Gmail (required for password reset & surprise letters)
    - `GMAIL_APP_PASSWORD` → Gmail app password (required)
+   - `GOOGLE_CLIENT_ID` → Google OAuth Client ID (for Google Sign-In)
 6. Deploy
 
 ### Frontend on Vercel
@@ -357,8 +365,9 @@ CSS variables in `globals.css` with `.dark` class toggle. Tailwind `darkMode: "c
 2. Import `keerthishree20/eternova`
 3. Root Directory: `frontend`
 4. Framework: Next.js (auto-detected)
-5. Environment Variable:
+5. Environment Variables:
    - `NEXT_PUBLIC_API_URL` → Your Render URL (e.g., `https://eternova-api.onrender.com`)
+   - `NEXT_PUBLIC_GOOGLE_CLIENT_ID` → Google OAuth Client ID
 6. Deploy
 
 ### Post-Deploy
@@ -396,6 +405,11 @@ PIN comparison is exact string match. Check the PIN set on the site via the API 
 - Verify `GMAIL_USER` and `GMAIL_APP_PASSWORD` are set
 - Use a Gmail App Password (not your regular password): https://myaccount.google.com/apppasswords
 - Check backend logs for SMTP errors
+
+### Google Sign-In not working
+- Verify `GOOGLE_CLIENT_ID` is set in backend `.env` and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` in frontend `.env.local`
+- Check that your domain is listed in Google Cloud Console → Credentials → Authorized JavaScript origins
+- Google Sign-In requires HTTPS in production (localhost is exempt)
 
 ### Couple mode not sharing data
 After linking, both partners need to refresh/re-login. The `get_accessible_user_ids()` reads `partner_id` on each request.

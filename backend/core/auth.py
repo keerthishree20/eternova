@@ -7,9 +7,12 @@ import base64
 import uuid
 from typing import Optional
 
+import httpx
 from fastapi import Header, HTTPException
 
-from state.database import create_user, get_user_by_email, get_user_by_id
+from state.database import create_user, get_user_by_email, get_user_by_id, get_user_by_google_id, create_google_user, link_google_to_user
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 
 JWT_SECRET = os.getenv("JWT_SECRET", "eternova-dev-secret-change-in-prod")
 
@@ -21,7 +24,10 @@ def _hash_password(password: str) -> str:
 
 
 def _verify_password(password: str, stored_hash: str) -> bool:
-    raw = bytes.fromhex(stored_hash)
+    try:
+        raw = bytes.fromhex(stored_hash)
+    except ValueError:
+        return False
     salt, key = raw[:32], raw[32:]
     new_key = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100_000)
     return hmac.compare_digest(key, new_key)
@@ -84,6 +90,40 @@ def authenticate_user(email: str, password: str) -> dict:
         raise ValueError("Invalid email or password")
     token = create_token(user["id"], user["email"], user["name"])
     return {"user_id": user["id"], "email": user["email"], "name": user["name"], "token": token}
+
+
+async def google_authenticate(credential: str) -> dict:
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"https://oauth2.googleapis.com/tokeninfo?id_token={credential}"
+        )
+    if resp.status_code != 200:
+        raise ValueError("Invalid Google token")
+    payload = resp.json()
+    if payload.get("aud") != GOOGLE_CLIENT_ID:
+        raise ValueError("Token not intended for this app")
+    if not payload.get("email_verified", False):
+        raise ValueError("Google email not verified")
+    google_id = payload["sub"]
+    email = payload["email"]
+    name = payload.get("name", email.split("@")[0])
+
+    user = get_user_by_google_id(google_id)
+    if user:
+        token = create_token(user["id"], user["email"], user["name"])
+        return {"user_id": user["id"], "email": user["email"], "name": user["name"], "token": token}
+
+    existing = get_user_by_email(email)
+    if existing:
+        link_google_to_user(existing["id"], google_id)
+        token = create_token(existing["id"], existing["email"], existing["name"])
+        return {"user_id": existing["id"], "email": existing["email"], "name": existing["name"], "token": token}
+
+    user_id = str(uuid.uuid4())
+    if not create_google_user(user_id, email, name, google_id):
+        raise ValueError("Could not create account")
+    token = create_token(user_id, email, name)
+    return {"user_id": user_id, "email": email, "name": name, "token": token}
 
 
 def get_current_user(authorization: str = Header(None)) -> dict:

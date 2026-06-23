@@ -59,6 +59,7 @@ Eternova lets you preserve love stories, memories, and milestones in a beautiful
 - **Couple Mode** — Link accounts via invite code or email. Once linked, both partners see each other's books, capsules, and milestones.
 - **Guestbook** — PIN-protected messaging on mini-sites so your special person can leave notes.
 - **Surprise Letters** — Schedule love letters to be emailed on a future date via Gmail SMTP.
+- **Google Sign-In** — One-click login/register via Google account. Auto-links with existing email accounts.
 - **Forgot Password** — Email-based password reset with 6-digit code (15-minute expiry).
 
 ### Discovery Features
@@ -90,7 +91,7 @@ Eternova lets you preserve love stories, memories, and milestones in a beautiful
 | Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion |
 | Backend | FastAPI, Python 3.11 |
 | Database | SQLite (WAL mode, 15 tables) |
-| Auth | Custom JWT (PBKDF2 + HS256) |
+| Auth | Custom JWT (PBKDF2 + HS256) + Google OAuth |
 | Email | Gmail SMTP (password reset + surprise letters) |
 | PDF | jsPDF |
 | QR | qrcode.react |
@@ -132,7 +133,7 @@ eternova/
 │   ├── api/
 │   │   ├── models.py           # Pydantic schemas
 │   │   └── routes/             # 11 route files, 40+ endpoints
-│   ├── core/                   # Auth, email, photos, sharing, templates
+│   ├── core/                   # Auth (JWT + Google OAuth), email, photos, sharing, templates
 │   └── state/
 │       └── database.py         # SQLite schema (16 tables) + migrations
 ├── frontend/                   # Next.js frontend
@@ -150,7 +151,7 @@ eternova/
 
 | Category | Endpoints | Auth |
 |----------|-----------|------|
-| Auth | Register, Login, Me, Forgot/Reset Password | No/Yes |
+| Auth | Register, Login, Google OAuth, Me, Forgot/Reset Password | No/Yes |
 | Books | CRUD + entries + photos + share | Yes |
 | Capsules | CRUD + lock enforcement | Yes |
 | Milestones | CRUD + upcoming | Yes |
@@ -171,11 +172,13 @@ eternova/
 | `CORS_ORIGINS` | Allowed origins (comma-separated) |
 | `GMAIL_USER` | Gmail for password reset & surprise letters |
 | `GMAIL_APP_PASSWORD` | Gmail app password |
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID |
 
 ### Frontend (.env.local)
 | Variable | Description |
 |----------|-------------|
 | `NEXT_PUBLIC_API_URL` | Backend URL |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth Client ID |
 
 ## Deployment
 
@@ -188,6 +191,7 @@ eternova/
 - Framework: Next.js
 - Root Directory: `frontend`
 - Set `NEXT_PUBLIC_API_URL` to Render URL
+- Set `NEXT_PUBLIC_GOOGLE_CLIENT_ID` to Google OAuth Client ID
 
 ---
 

@@ -44,6 +44,9 @@ export const apiRegister = (email: string, name: string, password: string) =>
 export const apiLogin = (email: string, password: string) =>
   request<AuthResponse>("POST", "/api/auth/login", { email, password }, false);
 
+export const apiGoogleAuth = (credential: string) =>
+  request<AuthResponse>("POST", "/api/auth/google", { credential }, false);
+
 export const apiMe = () =>
   request<{ id: string; email: string; name: string }>("GET", "/api/auth/me");
 

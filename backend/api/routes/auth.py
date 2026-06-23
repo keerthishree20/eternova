@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, HTTPException, Depends
 
-from api.models import RegisterRequest, LoginRequest, AuthResponse, ForgotPasswordRequest, ResetPasswordRequest
-from core.auth import register_user, authenticate_user, get_current_user, _hash_password
+from api.models import RegisterRequest, LoginRequest, AuthResponse, ForgotPasswordRequest, ResetPasswordRequest, GoogleAuthRequest
+from core.auth import register_user, authenticate_user, get_current_user, _hash_password, google_authenticate
 from core.email import send_email
 from state.database import _get_conn
 
@@ -25,6 +25,15 @@ async def register(req: RegisterRequest):
 async def login(req: LoginRequest):
     try:
         result = authenticate_user(req.email, req.password)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+
+@router.post("/google", response_model=AuthResponse)
+async def google_login(req: GoogleAuthRequest):
+    try:
+        result = await google_authenticate(req.credential)
         return result
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
