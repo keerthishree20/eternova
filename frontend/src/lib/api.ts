@@ -47,6 +47,12 @@ export const apiLogin = (email: string, password: string) =>
 export const apiMe = () =>
   request<{ id: string; email: string; name: string }>("GET", "/api/auth/me");
 
+export const apiForgotPassword = (email: string) =>
+  request<{ ok: boolean; message: string }>("POST", "/api/auth/forgot-password", { email }, false);
+
+export const apiResetPassword = (email: string, code: string, new_password: string) =>
+  request<{ ok: boolean; message: string }>("POST", "/api/auth/reset-password", { email, code, new_password }, false);
+
 // ── Dashboard ────────────────────────────────────────────────────────────────
 
 export const apiDashboard = () =>

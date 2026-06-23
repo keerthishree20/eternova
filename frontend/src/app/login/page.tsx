@@ -57,10 +57,12 @@ export default function LoginPage() {
             className="w-full py-2.5 rounded-xl gradient-brand text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
             {loading ? "Signing in..." : "Sign In"}
           </button>
-          <p className="text-center text-sm text-muted">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-primary font-medium hover:underline">Create one</Link>
-          </p>
+          <div className="flex items-center justify-between text-sm">
+            <Link href="/forgot-password" className="text-primary hover:underline">Forgot password?</Link>
+            <p className="text-muted">
+              <Link href="/register" className="text-primary font-medium hover:underline">Create account</Link>
+            </p>
+          </div>
         </form>
       </motion.div>
     </div>

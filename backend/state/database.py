@@ -198,6 +198,15 @@ def init_db():
     _add_column_if_missing(conn, "mini_sites", "guest_pin", "TEXT DEFAULT NULL")
     _add_column_if_missing(conn, "mini_sites", "theme", "TEXT DEFAULT 'romantic'")
     _add_column_if_missing(conn, "book_entries", "mood", "TEXT DEFAULT NULL")
+
+    conn.execute("""CREATE TABLE IF NOT EXISTS password_resets (
+        id TEXT PRIMARY KEY,
+        email TEXT NOT NULL,
+        code TEXT NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        used INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )""")
     _add_column_if_missing(conn, "users", "together_since", "DATE DEFAULT NULL")
 
     conn.execute("""CREATE TABLE IF NOT EXISTS site_books (
