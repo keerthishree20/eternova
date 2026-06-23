@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #fef7f0;
+  --foreground: #1a0a2e;
+  --card-bg: #ffffff;
+  --card-border: #f3e8ff;
+  --muted: #9b8ab8;
+  --subtle-bg: #fdf4ff;
+  --primary: #7c3aed;
+  --primary-light: #a78bfa;
+  --accent: #ec4899;
+  --accent-light: #f9a8d4;
+  --gold: #d97706;
+  --gold-light: #fbbf24;
+  --danger: #ef4444;
+}
+
+.dark {
+  --background: #0f0720;
+  --foreground: #f0e6ff;
+  --card-bg: #1a0f2e;
+  --card-border: #2d1b4e;
+  --muted: #7c6a9b;
+  --subtle-bg: #1a0f2e;
+  --primary: #a78bfa;
+  --primary-light: #c4b5fd;
+  --accent: #f472b6;
+  --accent-light: #f9a8d4;
+  --gold: #fbbf24;
+  --gold-light: #fde68a;
+  --danger: #f87171;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  transition: background 0.3s, color 0.3s;
+}
+
+.gradient-brand {
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+}
+
+.gradient-warm {
+  background: linear-gradient(135deg, #ec4899 0%, #d97706 100%);
+}
+
+.gradient-night {
+  background: linear-gradient(135deg, #1a0a2e 0%, #3b0764 50%, #7c3aed 100%);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.dark .glass {
+  background: rgba(26, 15, 46, 0.6);
+  border: 1px solid rgba(167, 139, 250, 0.15);
+}
+
+.neon-glow {
+  box-shadow: 0 0 15px rgba(167, 139, 250, 0.3), 0 0 30px rgba(167, 139, 250, 0.1);
+}
