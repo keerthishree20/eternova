@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: eternova-api
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_PATH
+        value: /app/eternova.db
+      - key: CORS_ORIGINS
+        value: https://eternova.vercel.app
+      - key: GMAIL_USER
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+    disk:
+      name: eternova-data
+      mountPath: /app
+      sizeGB: 1
