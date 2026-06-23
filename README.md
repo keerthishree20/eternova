@@ -4,6 +4,48 @@
 
 Eternova lets you preserve love stories, memories, and milestones in a beautiful, private space. Create memory books, seal time capsules, track milestones, write love letters, and build personalized mini-websites — all in one place.
 
+## Screenshots
+
+### Dashboard
+![Dashboard](screenshots/02-dashboard.png)
+*Welcome screen with Together Since counter, stats, Surprise Me button, and recent books*
+
+### Memory Books
+![Books](screenshots/03-books.png)
+*Book library with 3-dot details menu*
+
+### Book Reader
+![Book Reader](screenshots/04-book-reader.png)
+*Page-flip reader with Spotify embed, PDF export, and share link*
+
+### Milestone Timeline
+![Milestones](screenshots/05-milestones.png)
+*Alternating timeline with category icons and countdown badges*
+
+### Time Capsules
+![Capsules](screenshots/06-capsules.png)
+*Locked capsules with countdown, unlocked ones ready to reveal*
+
+### Letter Templates
+![Letters](screenshots/07-letters.png)
+*6 fill-in-the-blank templates with category badges*
+
+### Mini-Sites
+![Sites](screenshots/08-sites.png)
+*Site management with publish toggle, QR code, and edit*
+
+### Public Mini-Site
+![Mini Site](screenshots/09-mini-site.png)
+*Full public site with books, timeline, and PIN-protected guestbook*
+
+### Settings (Couple Mode)
+![Settings](screenshots/10-settings.png)
+*Partner linking via invite code or email*
+
+### Dark Mode
+![Dark Mode](screenshots/11-dashboard-dark.png)
+*Romantic dark theme with purple/pink/gold palette*
+
 ## Features
 
 ### Core Features
@@ -145,10 +187,6 @@ eternova/
 - Framework: Next.js
 - Root Directory: `frontend`
 - Set `NEXT_PUBLIC_API_URL` to Render URL
-
-## Screenshots
-
-*Register → Dashboard → Create Book → Add Entries → Share → Capsules → Milestones → Letters → Mini-Site*
 
 ---
 
