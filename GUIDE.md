@@ -16,7 +16,7 @@
 
 Eternova is a full-stack web application for preserving love stories and relationship memories. Unlike social media or dating apps, it focuses on the deeply personal act of recording, protecting, and sharing memories with one special person.
 
-**22 features** across **70 source files** (23 backend, 32 frontend), **15 database tables**, and **40+ API endpoints**.
+**23 features** across **70 source files** (23 backend, 32 frontend), **16 database tables**, and **40+ API endpoints**.
 
 ---
 
@@ -41,7 +41,7 @@ Eternova is a full-stack web application for preserving love stories and relatio
 │    └───────────────────┘    │
 │    ┌───────────────────┐    │
 │    │   Gmail SMTP      │    │
-│    │   (Surprise Ltrs) │    │
+│    │   (Reset + Ltrs)  │    │
 │    └───────────────────┘    │
 └─────────────────────────────┘
 ```
@@ -57,11 +57,12 @@ Eternova is a full-stack web application for preserving love stories and relatio
 
 ## Database Schema
 
-### 15 Tables
+### 16 Tables
 
 **Core User Data:**
 - `users` — id, email, name, password_hash, partner_id, together_since
 - `couple_invites` — id, from_user_id, invite_code, invite_email, status
+- `password_resets` — id, email, code, expires_at, used, created_at
 
 **Memory Books:**
 - `books` — id, user_id, title, person_name, description, cover_color, spotify_url, share_token, is_shared
@@ -109,9 +110,16 @@ New columns added via `_add_column_if_missing()` so `init_db()` is safe to run m
 - `create_token()` — Custom JWT with HS256, base64url encoding, 24hr expiry
 - `get_current_user()` — FastAPI `Depends()` that reads Bearer token, returns user dict or 401
 
+#### `api/routes/auth.py`
+- Register, login, `/me` endpoints
+- `forgot-password` — generates 6-digit code, stores in `password_resets`, emails via Gmail SMTP
+- `reset-password` — validates code + expiry, updates password hash
+- Always returns same message regardless of email existence (security)
+
 #### `core/email.py`
 - `send_email_sync()` — Blocking SMTP via Gmail SSL (port 465)
 - `send_email()` — Async wrapper using `asyncio.to_thread()`
+- Used by: password reset, surprise letters, couple invite emails
 - Reads `GMAIL_USER` and `GMAIL_APP_PASSWORD` from env
 
 #### `core/templates.py`
@@ -195,6 +203,7 @@ Conditionally wraps pages in `max-w-7xl` container. Public pages (`/site/*`, `/s
 | `/` | Dashboard — stats, together-since, on-this-day, surprise-me |
 | `/login` | Login form |
 | `/register` | Registration form |
+| `/forgot-password` | Email-based password reset (code entry + new password) |
 | `/books` | Book list with 3-dot menu |
 | `/books/new` | Create book with Spotify + color picker |
 | `/books/[bookId]` | Page-flip reader with PDF export + Spotify |
@@ -228,6 +237,7 @@ CSS variables in `globals.css` with `.dark` class toggle. Tailwind `darkMode: "c
 - Register with email, name, password (min 6 chars)
 - JWT token stored in localStorage
 - Auto-redirects to dashboard
+- Forgot password: enter email → receive 6-digit code → enter code + new password → reset complete
 
 ### 2. Dashboard
 - Welcome banner with "Surprise Me" button
@@ -337,8 +347,8 @@ CSS variables in `globals.css` with `.dark` class toggle. Tailwind `darkMode: "c
    - `JWT_SECRET` → Generate random value
    - `DB_PATH` → `./eternova.db`
    - `CORS_ORIGINS` → Your Vercel URL (e.g., `https://eternova-abc.vercel.app`)
-   - `GMAIL_USER` → Your Gmail (optional)
-   - `GMAIL_APP_PASSWORD` → App password (optional)
+   - `GMAIL_USER` → Your Gmail (required for password reset & surprise letters)
+   - `GMAIL_APP_PASSWORD` → Gmail app password (required)
 6. Deploy
 
 ### Frontend on Vercel

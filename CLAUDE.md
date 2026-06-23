@@ -9,6 +9,10 @@ Eternova is a Secret Love & Relationship Memory Platform. Users preserve love st
 - **Auth**: Custom JWT (PBKDF2 password hashing, HS256, 24hr expiry)
 - **Deployment**: Render (backend) + Vercel (frontend)
 
+## Live URLs
+- **Frontend**: https://eternova.vercel.app
+- **Backend**: https://eternova-api.onrender.com
+
 ## Project Structure
 ```
 eternova/
@@ -17,7 +21,7 @@ eternova/
 │   ├── api/
 │   │   ├── models.py         # All Pydantic request/response models
 │   │   └── routes/
-│   │       ├── auth.py        # Register, login, /me
+│   │       ├── auth.py        # Register, login, /me, forgot/reset password
 │   │       ├── books.py       # Books + entries + photos CRUD
 │   │       ├── capsules.py    # Time capsules with lock enforcement
 │   │       ├── milestones.py  # Milestone CRUD + upcoming
@@ -29,7 +33,7 @@ eternova/
 │   │       └── couple.py      # Partner linking via invite codes
 │   ├── core/
 │   │   ├── auth.py            # JWT + password hashing + get_current_user
-│   │   ├── email.py           # Gmail SMTP async wrapper
+│   │   ├── email.py           # Gmail SMTP (password reset + surprise letters)
 │   │   ├── photos.py          # Photo save/delete with UUID filenames
 │   │   ├── sharing.py         # Share token generation
 │   │   └── templates.py       # 6 letter templates
@@ -37,7 +41,7 @@ eternova/
 │       └── database.py        # SQLite schema, migrations, helpers
 ├── frontend/
 │   └── src/
-│       ├── app/               # Next.js pages (20 routes)
+│       ├── app/               # Next.js pages (21 routes)
 │       ├── components/        # Reusable UI components
 │       ├── context/           # AuthContext, ThemeContext
 │       └── lib/               # API client, types, PDF export, themes
@@ -81,8 +85,8 @@ Sites link to books via `site_books` junction table, entries via `site_entries`,
 ### Schema Migrations
 `_add_column_if_missing(conn, table, column, definition)` for safe column additions. New tables use `CREATE TABLE IF NOT EXISTS`.
 
-## Database Tables (15)
-users, books, book_entries, entry_photos, capsules, capsule_photos, milestones, letter_drafts, mini_sites, couple_invites, guestbook_entries, scheduled_letters, site_books, site_entries, site_milestones
+## Database Tables (16)
+users, books, book_entries, entry_photos, capsules, capsule_photos, milestones, letter_drafts, mini_sites, couple_invites, guestbook_entries, scheduled_letters, site_books, site_entries, site_milestones, password_resets
 
 ## API Endpoints (40+)
 All authenticated endpoints require `Authorization: Bearer <token>`.
@@ -90,6 +94,8 @@ All routes prefixed with `/api`.
 
 ### Public (no auth)
 - `GET /health`
+- `POST /api/auth/forgot-password`
+- `POST /api/auth/reset-password`
 - `GET /api/public/books/{share_token}`
 - `GET /api/public/sites/{slug}`
 - `GET /api/public/sites/{slug}/guestbook?pin=...`
@@ -101,7 +107,7 @@ All routes prefixed with `/api`.
 - `JWT_SECRET` — Secret key for JWT signing
 - `DB_PATH` — SQLite database path (default: ./eternova.db)
 - `CORS_ORIGINS` — Comma-separated allowed origins
-- `GMAIL_USER` — Gmail address for surprise letters
+- `GMAIL_USER` — Gmail address for password reset & surprise letters
 - `GMAIL_APP_PASSWORD` — Gmail app password
 
 ### Frontend (.env.local)

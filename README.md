@@ -59,6 +59,7 @@ Eternova lets you preserve love stories, memories, and milestones in a beautiful
 - **Couple Mode** — Link accounts via invite code or email. Once linked, both partners see each other's books, capsules, and milestones.
 - **Guestbook** — PIN-protected messaging on mini-sites so your special person can leave notes.
 - **Surprise Letters** — Schedule love letters to be emailed on a future date via Gmail SMTP.
+- **Forgot Password** — Email-based password reset with 6-digit code (15-minute expiry).
 
 ### Discovery Features
 - **On This Day** — Dashboard shows entries and milestones from the same date in previous years.
@@ -90,7 +91,7 @@ Eternova lets you preserve love stories, memories, and milestones in a beautiful
 | Backend | FastAPI, Python 3.11 |
 | Database | SQLite (WAL mode, 15 tables) |
 | Auth | Custom JWT (PBKDF2 + HS256) |
-| Email | Gmail SMTP (smtplib) |
+| Email | Gmail SMTP (password reset + surprise letters) |
 | PDF | jsPDF |
 | QR | qrcode.react |
 | Deploy | Vercel (frontend) + Render (backend) |
@@ -130,13 +131,13 @@ eternova/
 │   ├── main.py                 # App entry, CORS, routers, scheduled letter loop
 │   ├── api/
 │   │   ├── models.py           # Pydantic schemas
-│   │   └── routes/             # 10 route files, 40+ endpoints
+│   │   └── routes/             # 11 route files, 40+ endpoints
 │   ├── core/                   # Auth, email, photos, sharing, templates
 │   └── state/
-│       └── database.py         # SQLite schema (15 tables) + migrations
+│       └── database.py         # SQLite schema (16 tables) + migrations
 ├── frontend/                   # Next.js frontend
 │   └── src/
-│       ├── app/                # 20 page routes
+│       ├── app/                # 21 page routes
 │       ├── components/         # DetailsMenu, SpotifyEmbed, Navbar, SearchBar
 │       ├── context/            # Auth + Theme providers
 │       └── lib/                # API client, types, PDF export, site themes
@@ -149,7 +150,7 @@ eternova/
 
 | Category | Endpoints | Auth |
 |----------|-----------|------|
-| Auth | Register, Login, Me | No/Yes |
+| Auth | Register, Login, Me, Forgot/Reset Password | No/Yes |
 | Books | CRUD + entries + photos + share | Yes |
 | Capsules | CRUD + lock enforcement | Yes |
 | Milestones | CRUD + upcoming | Yes |
@@ -168,8 +169,8 @@ eternova/
 | `JWT_SECRET` | Secret for JWT signing |
 | `DB_PATH` | SQLite path (default: `./eternova.db`) |
 | `CORS_ORIGINS` | Allowed origins (comma-separated) |
-| `GMAIL_USER` | Gmail for surprise letters (optional) |
-| `GMAIL_APP_PASSWORD` | Gmail app password (optional) |
+| `GMAIL_USER` | Gmail for password reset & surprise letters |
+| `GMAIL_APP_PASSWORD` | Gmail app password |
 
 ### Frontend (.env.local)
 | Variable | Description |
