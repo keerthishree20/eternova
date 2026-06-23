@@ -10,8 +10,8 @@ Eternova is a Secret Love & Relationship Memory Platform. Users preserve love st
 - **Deployment**: Render (backend) + Vercel (frontend)
 
 ## Live URLs
-- **Frontend**: https://eternova.vercel.app
-- **Backend**: https://eternova-api.onrender.com
+- **Frontend**: https://eternova-peach.vercel.app
+- **Backend**: https://eternova-3xim.onrender.com
 
 ## Project Structure
 ```
