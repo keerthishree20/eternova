@@ -1,133 +1,27 @@
-# Eternova — Development Guide
+# Eternova — Agent Instructions
 
-## Project Overview
-Eternova is a Secret Love & Relationship Memory Platform. Users preserve love stories, memories, and milestones through memory books, time capsules, letters, and personalized mini-websites.
+Secret love and relationship memory platform with memory books, time capsules, love letters, milestone tracking, and couple mode. Features JWT auth, rich text editing, and smooth animations.
 
-## Tech Stack
-- **Backend**: FastAPI + SQLite (raw sqlite3, WAL mode, no ORM)
-- **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind CSS + Framer Motion
-- **Auth**: Custom JWT (PBKDF2 password hashing, HS256, 24hr expiry) + Google OAuth
-- **Deployment**: Render (backend) + Vercel (frontend)
+> **Note:** Read `node_modules/next/dist/docs/` before editing Next.js code — APIs may differ from your training data.
 
-## Live URLs
-- **Frontend**: https://eternova-peach.vercel.app
-- **Backend**: https://eternova-3xim.onrender.com
+## Repository Layout
 
-## Project Structure
-```
-eternova/
-├── backend/
-│   ├── main.py              # FastAPI app, CORS, routers, lifespan
-│   ├── api/
-│   │   ├── models.py         # All Pydantic request/response models
-│   │   └── routes/
-│   │       ├── auth.py        # Register, login, Google OAuth, /me, forgot/reset password
-│   │       ├── books.py       # Books + entries + photos CRUD
-│   │       ├── capsules.py    # Time capsules with lock enforcement
-│   │       ├── milestones.py  # Milestone CRUD + upcoming
-│   │       ├── letters.py     # Letter templates + drafts
-│   │       ├── sites.py       # Mini-sites CRUD + multi-book + publish
-│   │       ├── public.py      # Unauthenticated: shared books, public sites, guestbook
-│   │       ├── dashboard.py   # Stats, search, random memory, together-since
-│   │       ├── scheduled_letters.py  # Surprise letter scheduling
-│   │       └── couple.py      # Partner linking via invite codes
-│   ├── core/
-│   │   ├── auth.py            # JWT + password hashing + Google OAuth + get_current_user
-│   │   ├── email.py           # Gmail SMTP (password reset + surprise letters)
-│   │   ├── photos.py          # Photo save/delete with UUID filenames
-│   │   ├── sharing.py         # Share token generation
-│   │   └── templates.py       # 6 letter templates
-│   └── state/
-│       └── database.py        # SQLite schema, migrations, helpers
-├── frontend/
-│   └── src/
-│       ├── app/               # Next.js pages (21 routes)
-│       ├── components/        # Reusable UI components
-│       ├── context/           # AuthContext, ThemeContext
-│       └── lib/               # API client, types, PDF export, themes
-└── render.yaml                # Render deployment config
-```
+Read the actual files before assuming structure — don't rely on training data for this repo.
 
-## Running Locally
+## Key Constraints
 
-### Backend
-```bash
-cd backend
-python3.11 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env  # Edit with your values
-uvicorn main:app --port 8001 --reload
-```
+- Keep all code self-contained — avoid unnecessary dependencies
+- Follow existing code style and naming conventions
+- Write clear commit messages
+- Do not modify `CLAUDE.md`, `README.md`, `GUIDEME.md`, or `SKILLS.md` unless explicitly asked
 
-### Frontend
-```bash
-cd frontend
-npm install
-echo "NEXT_PUBLIC_API_URL=http://localhost:8001" > .env.local
-npm run dev
-```
+## Tech Context
 
-## Key Patterns
+Next.js, FastAPI, SQLite, Python, TypeScript, JWT, Tailwind CSS, Framer Motion
 
-### Authentication
-Every authenticated route uses `Depends(get_current_user)`. The frontend stores JWT in `localStorage('eternova_token')` and sends it as `Authorization: Bearer <token>`.
+## Before Making Changes
 
-**Google OAuth**: Users can sign in via Google Identity Services. The frontend sends the Google ID token to `POST /api/auth/google`, the backend verifies it with Google's tokeninfo endpoint, and returns a JWT. Google users who share an email with an existing account are auto-linked. Google-only users have no password (password login returns "Invalid email or password").
-
-### Couple Mode (Shared Ownership)
-`get_accessible_user_ids(user_id)` returns `[user_id]` or `[user_id, partner_id]` if linked. All list queries use `WHERE user_id IN (...)` for shared access.
-
-### Capsule Lock Enforcement
-Server-side only — GET returns NO message/photos if `date.today() < unlock_date`. Content is never sent to the client before the unlock date.
-
-### Mini-Site Data Flow
-Sites link to books via `site_books` junction table, entries via `site_entries`, milestones via `site_milestones`. Empty selection = show all (default). Public endpoint strips `guest_pin` and adds `has_guestbook` flag.
-
-### Schema Migrations
-`_add_column_if_missing(conn, table, column, definition)` for safe column additions. New tables use `CREATE TABLE IF NOT EXISTS`.
-
-## Database Tables (16)
-users, books, book_entries, entry_photos, capsules, capsule_photos, milestones, letter_drafts, mini_sites, couple_invites, guestbook_entries, scheduled_letters, site_books, site_entries, site_milestones, password_resets
-
-## API Endpoints (40+)
-All authenticated endpoints require `Authorization: Bearer <token>`.
-All routes prefixed with `/api`.
-
-### Public (no auth)
-- `GET /health`
-- `POST /api/auth/google`
-- `POST /api/auth/forgot-password`
-- `POST /api/auth/reset-password`
-- `GET /api/public/books/{share_token}`
-- `GET /api/public/sites/{slug}`
-- `GET /api/public/sites/{slug}/guestbook?pin=...`
-- `POST /api/public/sites/{slug}/guestbook`
-
-## Environment Variables
-
-### Backend (.env)
-- `JWT_SECRET` — Secret key for JWT signing
-- `DB_PATH` — SQLite database path (default: ./eternova.db)
-- `CORS_ORIGINS` — Comma-separated allowed origins
-- `GMAIL_USER` — Gmail address for password reset & surprise letters
-- `GMAIL_APP_PASSWORD` — Gmail app password
-- `GOOGLE_CLIENT_ID` — Google OAuth Client ID
-
-### Frontend (.env.local)
-- `NEXT_PUBLIC_API_URL` — Backend API URL
-- `NEXT_PUBLIC_GOOGLE_CLIENT_ID` — Google OAuth Client ID
-
-## Testing
-```bash
-# Backend health
-curl http://localhost:8001/health
-
-# Register
-curl -X POST http://localhost:8001/api/auth/register \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"test@test.com","name":"Test","password":"test123"}'
-
-# Frontend build check
-cd frontend && npm run build
-```
+1. Read the relevant source files first
+2. Understand the existing patterns
+3. Make targeted edits — don't refactor beyond the task scope
+4. Test locally before committing
