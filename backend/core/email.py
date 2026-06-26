@@ -12,8 +12,9 @@ def send_email_sync(to: str, subject: str, body_html: str) -> bool:
     gmail_user = os.getenv("GMAIL_USER", "")
     gmail_password = os.getenv("GMAIL_APP_PASSWORD", "")
     if not gmail_user or not gmail_password:
-        logger.warning("Email not sent: GMAIL_USER or GMAIL_APP_PASSWORD not configured")
+        print(f"[EMAIL] MISSING CREDENTIALS: GMAIL_USER={bool(gmail_user)} GMAIL_APP_PASSWORD={bool(gmail_password)}", flush=True)
         return False
+    print(f"[EMAIL] Attempting to send to {to}", flush=True)
     msg = MIMEMultipart("alternative")
     msg["From"] = gmail_user
     msg["To"] = to
@@ -23,10 +24,10 @@ def send_email_sync(to: str, subject: str, body_html: str) -> bool:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(gmail_user, gmail_password)
             server.sendmail(gmail_user, to, msg.as_string())
-        logger.info(f"Email sent to {to}: {subject}")
+        print(f"[EMAIL] SUCCESS: sent to {to}", flush=True)
         return True
     except Exception as e:
-        logger.error(f"Email failed to {to}: {e}")
+        print(f"[EMAIL] FAILED to {to}: {e}", flush=True)
         return False
 
 
