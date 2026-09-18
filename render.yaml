@@ -15,6 +15,13 @@ services:
         sync: false
       - key: GMAIL_APP_PASSWORD
         sync: false
+      # Render's free tier blocks SMTP, so production email goes through
+      # Brevo's HTTPS API when this key is set. BREVO_SENDER must be a
+      # sender address verified in the Brevo dashboard.
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER
+        sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
     disk:

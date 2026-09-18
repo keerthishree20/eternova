@@ -55,8 +55,13 @@ The frontend calls `http://localhost:8001` unless `NEXT_PUBLIC_API_URL` is set. 
 | `CORS_ORIGINS` | allowed frontend origins, default `http://localhost:3000` |
 | `GMAIL_USER`, `GMAIL_APP_PASSWORD` | sending password resets, invites and surprise letters |
 | `GOOGLE_CLIENT_ID` | verifying Google Sign-In tokens |
+| `BREVO_API_KEY`, `BREVO_SENDER` | production email through Brevo's HTTPS API. When set, used instead of Gmail |
 
-There are no automated tests. `backend/tests/` holds only an empty `__init__.py`.
+Tests cover the email routing only:
+```bash
+backend/venv/bin/pip install pytest
+cd backend && venv/bin/python -m pytest tests
+```
 
 ---
 
@@ -462,12 +467,21 @@ The likely cause: `core/email.py` sends through Gmail's SMTP server on port 465,
 September 2025 Render's free web services block outgoing traffic on SMTP ports 25, 465 and 587. This
 has not been confirmed against Render's logs.
 
-Two ways to fix it:
-- move the backend to a paid Render instance, where SMTP is allowed, or
-- send through an HTTPS email API such as Resend or Brevo, which needs an account and an API key and
-  a change to `core/email.py`.
+**The code fix is in.** `core/email.py` sends through Brevo's HTTPS API whenever `BREVO_API_KEY` is
+set, and falls back to Gmail SMTP otherwise. HTTPS on port 443 is not blocked on Render. What remains
+is turning it on, about ten minutes:
 
-Locally, with `GMAIL_USER` and `GMAIL_APP_PASSWORD` set, email works.
+1. Create a free account at https://www.brevo.com. The free plan sends 300 emails a day.
+2. In Brevo, open **Senders, Domains & Dedicated IPs → Senders**, add your Gmail address, and click
+   the verification link Brevo emails you.
+3. In **SMTP & API → API Keys**, create a key.
+4. In the Render dashboard for `eternova-api`, set `BREVO_API_KEY` to that key and `BREVO_SENDER` to
+   the verified address. Save, and Render redeploys.
+5. Test: use "Forgot password" on the live site, then check Render's logs for
+   `[EMAIL] SUCCESS: sent to ... via Brevo`.
+
+Locally, with `GMAIL_USER` and `GMAIL_APP_PASSWORD` set and no Brevo key, Gmail SMTP still works.
+`backend/tests/test_email.py` covers both routes without sending real email.
 
 ---
 
