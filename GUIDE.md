@@ -2,13 +2,15 @@
 
 ## Table of Contents
 1. [What is Eternova?](#what-is-eternova)
-2. [Architecture](#architecture)
-3. [Database Schema](#database-schema)
-4. [Backend Deep Dive](#backend-deep-dive)
-5. [Frontend Deep Dive](#frontend-deep-dive)
-6. [Feature Walkthrough](#feature-walkthrough)
-7. [Deployment Guide](#deployment-guide)
-8. [Troubleshooting](#troubleshooting)
+2. [Quick Start](#quick-start)
+3. [Architecture](#architecture)
+4. [Database Schema](#database-schema)
+5. [Backend Deep Dive](#backend-deep-dive)
+6. [Frontend Deep Dive](#frontend-deep-dive)
+7. [Feature Walkthrough](#feature-walkthrough)
+8. [Deployment Guide](#deployment-guide)
+9. [Known Issues](#known-issues)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -17,6 +19,44 @@
 Eternova is a full-stack web application for preserving love stories and relationship memories. Unlike social media or dating apps, it focuses on the deeply personal act of recording, protecting, and sharing memories with one special person.
 
 **24 features** across **71 source files** (23 backend, 33 frontend), **16 database tables**, and **40+ API endpoints**.
+
+---
+
+## Quick Start
+
+### Backend
+Needs Python 3.11 or newer. The system `python3` here is 3.6, so name the version.
+
+```bash
+cd backend
+python3.12 -m venv venv
+venv/bin/pip install -r requirements.txt
+cp .env.example .env              # set JWT_SECRET; Gmail and Google values are optional locally
+venv/bin/uvicorn main:app --port 8001 --reload
+```
+
+The SQLite database is created on first start. API docs are at http://localhost:8001/docs.
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev -- -p 3000            # http://localhost:3000
+```
+
+The frontend calls `http://localhost:8001` unless `NEXT_PUBLIC_API_URL` is set. Set
+`NEXT_PUBLIC_GOOGLE_CLIENT_ID` in `frontend/.env.local` to enable Google Sign-In.
+
+### Environment variables (`backend/.env`)
+| variable | purpose |
+|---|---|
+| `JWT_SECRET` | signs login tokens. Use a long random value |
+| `DB_PATH` | SQLite file, default `./eternova.db` |
+| `CORS_ORIGINS` | allowed frontend origins, default `http://localhost:3000` |
+| `GMAIL_USER`, `GMAIL_APP_PASSWORD` | sending password resets, invites and surprise letters |
+| `GOOGLE_CLIENT_ID` | verifying Google Sign-In tokens |
+
+There are no automated tests. `backend/tests/` holds only an empty `__init__.py`.
 
 ---
 
@@ -37,7 +77,7 @@ Eternova is a full-stack web application for preserving love stories and relatio
 │    (Uvicorn + Docker)       │
 │    ┌───────────────────┐    │
 │    │   SQLite (WAL)    │    │
-│    │   15 tables       │    │
+│    │   16 tables       │    │
 │    └───────────────────┘    │
 │    ┌───────────────────┐    │
 │    │   Gmail SMTP      │    │
@@ -131,7 +171,7 @@ New columns added via `_add_column_if_missing()` so `init_db()` is safe to run m
 
 #### `state/database.py`
 - SQLite with WAL mode and foreign keys ON
-- `init_db()` creates all 15 tables + indexes
+- `init_db()` creates all 16 tables + indexes
 - `_add_column_if_missing()` for safe schema evolution
 - `get_accessible_user_ids()` returns [user_id] or [user_id, partner_id] for couple mode
 - `get_user_by_google_id()`, `create_google_user()`, `link_google_to_user()` for Google OAuth
@@ -174,6 +214,29 @@ New columns added via `_add_column_if_missing()` so `init_db()` is safe to run m
 - Accept: links both users (sets `partner_id` on both)
 - Unlink: clears `partner_id` on both
 
+#### `api/routes/milestones.py`
+- CRUD under `/api/milestones`, plus `GET /api/milestones/upcoming` for the dashboard
+
+#### `api/routes/letters.py`
+- `GET /api/letters/templates` and `/templates/{id}` list the six templates
+- `POST /api/letters/preview` fills a template without saving
+- Drafts: create, list, get, update and delete under `/api/letters/drafts`
+
+#### `api/routes/scheduled_letters.py`
+- Surprise letters under `/api/scheduled-letters`: list, create, get, delete
+- Delivery happens in the background loop in `main.py`, which checks every 300 seconds
+
+#### `core/photos.py`
+- `save_photo()` stores an upload in `backend/uploads/` under a random name, allowing
+  `.jpg`, `.jpeg`, `.png`, `.gif` and `.webp`
+- `delete_photo()` removes the file when its entry or book is deleted
+
+#### `core/sharing.py`
+- `generate_share_token()` returns a 32-byte `secrets.token_urlsafe` value for shared book links
+
+#### `api/models.py`
+- Pydantic request and response models for every route
+
 ---
 
 ## Frontend Deep Dive
@@ -201,6 +264,15 @@ Debounced search (300ms) with dropdown results grouped by books, entries, milest
 
 #### `components/layout/MainWrapper.tsx`
 Conditionally wraps pages in `max-w-7xl` container. Public pages (`/site/*`, `/shared/*`) render full-width.
+
+#### `components/layout/Navbar.tsx`
+The top navigation, holding the search bar and the theme toggle.
+
+#### `lib/pdfExport.ts`
+`exportBookToPDF(book)` builds the book PDF in the browser with jsPDF.
+
+### Versions
+Next.js 14.2, React 18, Framer Motion 12, jsPDF 4 and `qrcode.react` 4.
 
 ### Page Routes (20)
 
@@ -381,6 +453,24 @@ CSS variables in `globals.css` with `.dark` class toggle. Tailwind `darkMode: "c
 
 ---
 
+## Known Issues
+
+### Emails do not arrive in production
+Forgot-password codes, couple invites and surprise letters are not delivered on the deployed site.
+
+The likely cause: `core/email.py` sends through Gmail's SMTP server on port 465, and since
+September 2025 Render's free web services block outgoing traffic on SMTP ports 25, 465 and 587. This
+has not been confirmed against Render's logs.
+
+Two ways to fix it:
+- move the backend to a paid Render instance, where SMTP is allowed, or
+- send through an HTTPS email API such as Resend or Brevo, which needs an account and an API key and
+  a change to `core/email.py`.
+
+Locally, with `GMAIL_USER` and `GMAIL_APP_PASSWORD` set, email works.
+
+---
+
 ## Troubleshooting
 
 ### "Cannot find module './vendor-chunks/motion-dom.js'"
@@ -402,6 +492,7 @@ Verify `CORS_ORIGINS` in backend `.env` includes the frontend URL. Use `*` for d
 PIN comparison is exact string match. Check the PIN set on the site via the API or edit page.
 
 ### Email not sending
+- On the deployed site, see [Known Issues](#known-issues) first
 - Verify `GMAIL_USER` and `GMAIL_APP_PASSWORD` are set
 - Use a Gmail App Password (not your regular password): https://myaccount.google.com/apppasswords
 - Check backend logs for SMTP errors
