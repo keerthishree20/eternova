@@ -1,5 +1,7 @@
 # Eternova
 
+[![tests](https://github.com/keerthishree20/eternova/actions/workflows/tests.yml/badge.svg)](https://github.com/keerthishree20/eternova/actions/workflows/tests.yml)
+
 Secret love and relationship memory platform with memory books, time capsules, love letters, milestone tracking, and couple mode. Features JWT auth, rich text editing, and smooth animations.
 
 **Live Demo:** [https://eternova-peach.vercel.app](https://eternova-peach.vercel.app)
