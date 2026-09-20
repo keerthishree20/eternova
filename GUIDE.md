@@ -1,5 +1,8 @@
 # Eternova — Complete Project Guide
 
+**Repository:** https://github.com/keerthishree20/eternova
+**Live:** https://eternova-peach.vercel.app
+
 ## Table of Contents
 1. [What is Eternova?](#what-is-eternova)
 2. [Quick Start](#quick-start)
