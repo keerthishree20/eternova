@@ -2,6 +2,7 @@
 
 **Repository:** https://github.com/keerthishree20/eternova
 **Live:** https://eternova-peach.vercel.app
+**All projects:** https://github.com/keerthishree20
 
 ## Table of Contents
 1. [What is Eternova?](#what-is-eternova)
